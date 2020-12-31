@@ -18,7 +18,9 @@ const (
 	//HEIGHT = 100
 )
 
-type PerlinNoise struct{}
+type PerlinNoise struct {
+	hashtable []int
+}
 
 // Fade 6t^5 - 15t^4 + 10t^3.
 func (p *PerlinNoise) Fade(t float64) float64 {
@@ -30,20 +32,18 @@ func (p *PerlinNoise) Lerp(a, b, t float64) float64 {
 	return a + (b-a)*t
 }
 
-var HASHTABLE []int
-
 func (p *PerlinNoise) setHash(seed int64) {
-	HASHTABLE = make([]int, WIDTH*HEIGHT)
+	p.hashtable = make([]int, WIDTH*HEIGHT)
 	rand.Seed(seed)
 	for i := 0; i < WIDTH*HEIGHT; i++ {
-		HASHTABLE[i] = rand.Intn(255)
+		p.hashtable[i] = rand.Intn(255)
 	}
 }
 
 func (p *PerlinNoise) getHash(x, y int) int {
 	x %= 255
 	y %= 255
-	return HASHTABLE[x+HASHTABLE[y]]
+	return p.hashtable[x+p.hashtable[y]]
 }
 
 // Grad 勾配
@@ -81,7 +81,7 @@ func (p *PerlinNoise) PerlinNoise(x, y float64) float64 {
 	) + 1) / 2
 }
 
-func octavePerlinNoise(p *PerlinNoise, x, y int) float64 {
+func (p *PerlinNoise) octavePerlinNoise(x, y int) float64 {
 	var (
 		a          float64 = 1.
 		f          float64 = 1.
@@ -106,7 +106,7 @@ func setField() []color.Color {
 	field := make([]color.Color, WIDTH*HEIGHT)
 	for x := 0; x < WIDTH; x++ {
 		for y := 0; y < HEIGHT; y++ {
-			field[y*HEIGHT+x] = color.RGBA{0, 0, 0, uint8(255 * octavePerlinNoise(p, x, y))}
+			field[y*HEIGHT+x] = color.RGBA{0, 0, 0, uint8(255 * p.octavePerlinNoise(x, y))}
 		}
 	}
 	return field
