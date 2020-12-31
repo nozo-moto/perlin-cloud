@@ -34,17 +34,19 @@ func (p *PerlinNoise) Lerp(a, b, t float64) float64 {
 
 func (p *PerlinNoise) setHash(seed int64) {
 	p.hashtable = make([]int, WIDTH*HEIGHT)
-	randtable := make([]int, WIDTH)
-	for i := 0; i < WIDTH; i++ {
-		randtable[i] = rand.Intn(WIDTH)
+	randtable := make([]int, HEIGHT)
+	for i := 0; i < HEIGHT; i++ {
+		randtable[i] = rand.Intn(HEIGHT)
 	}
 	rand.Seed(seed)
 	for i := 0; i < WIDTH*HEIGHT; i++ {
-		p.hashtable[i] = randtable[i%WIDTH]
+		p.hashtable[i] = randtable[i%HEIGHT]
 	}
 }
 
 func (p *PerlinNoise) getHash(x, y int) int {
+	//	x %= WIDTH
+	//	y %= HEIGHT
 	x %= 255
 	y %= 255
 	return p.hashtable[x+p.hashtable[y]]
@@ -87,7 +89,7 @@ func (p *PerlinNoise) PerlinNoise(x, y float64) float64 {
 	) + 1) / 2
 }
 
-func (p *PerlinNoise) octavePerlinNoise(x, y int) float64 {
+func (p *PerlinNoise) OctavePerlinNoise(x, y int) float64 {
 	var (
 		a          float64 = 1.
 		f          float64 = 1.
@@ -96,14 +98,13 @@ func (p *PerlinNoise) octavePerlinNoise(x, y int) float64 {
 		per        float64 = 0.5
 	)
 	for i := 0; i < 5; i++ {
-		noise := p.PerlinNoise(float64(x), float64(y))
-		totalValue += a * noise
+		totalValue += a * p.PerlinNoise(float64(x)*f, float64(y)*f)
 		maxValue += a
 		a *= per
 		f *= 2
 	}
 
-	return totalValue / maxValue
+	return math.Abs(totalValue / maxValue)
 }
 
 func setField() []color.Color {
@@ -112,7 +113,12 @@ func setField() []color.Color {
 	field := make([]color.Color, WIDTH*HEIGHT)
 	for x := 0; x < WIDTH; x++ {
 		for y := 0; y < HEIGHT; y++ {
-			field[y*HEIGHT+x] = color.RGBA{255, 255, 255, uint8(255 * p.octavePerlinNoise(x, y))}
+			field[y*HEIGHT+x] = color.RGBA{
+				uint8(255 * p.OctavePerlinNoise(x, y)),
+				uint8(255 * p.OctavePerlinNoise(x, y)),
+				uint8(255 * p.OctavePerlinNoise(x, y)),
+				255,
+			}
 		}
 	}
 	return field
