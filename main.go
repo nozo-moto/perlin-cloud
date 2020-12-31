@@ -34,9 +34,13 @@ func (p *PerlinNoise) Lerp(a, b, t float64) float64 {
 
 func (p *PerlinNoise) setHash(seed int64) {
 	p.hashtable = make([]int, WIDTH*HEIGHT)
+	randtable := make([]int, WIDTH)
+	for i := 0; i < WIDTH; i++ {
+		randtable[i] = rand.Intn(WIDTH)
+	}
 	rand.Seed(seed)
 	for i := 0; i < WIDTH*HEIGHT; i++ {
-		p.hashtable[i] = rand.Intn(255)
+		p.hashtable[i] = randtable[i%WIDTH]
 	}
 }
 
@@ -63,8 +67,10 @@ func (p *PerlinNoise) Grad(hash int, a, b float64) float64 {
 }
 
 func (p *PerlinNoise) PerlinNoise(x, y float64) float64 {
-	xf, xi := math.Frexp(x)
-	yf, yi := math.Frexp(y)
+	xi := int(math.Floor(x))
+	yi := int(math.Floor(y))
+	xf := x - float64(xi)
+	yf := y - float64(yi)
 
 	a00 := p.Grad(p.getHash(xi, yi), xf, yf)
 	a10 := p.Grad(p.getHash(xi+1, yi), xf-1, yf)
@@ -106,7 +112,7 @@ func setField() []color.Color {
 	field := make([]color.Color, WIDTH*HEIGHT)
 	for x := 0; x < WIDTH; x++ {
 		for y := 0; y < HEIGHT; y++ {
-			field[y*HEIGHT+x] = color.RGBA{0, 0, 0, uint8(255 * p.octavePerlinNoise(x, y))}
+			field[y*HEIGHT+x] = color.RGBA{255, 255, 255, uint8(255 * p.octavePerlinNoise(x, y))}
 		}
 	}
 	return field
