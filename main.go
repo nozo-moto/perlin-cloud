@@ -14,9 +14,11 @@ import (
 )
 
 var (
-	width    = 1920
-	height   = 1080
-	filename = "./image.png"
+	width       = 1920
+	height      = 1080
+	octerves    = 5
+	persistence = 0.5
+	filename    = "./image.png"
 )
 
 func setField() []color.Color {
@@ -24,11 +26,14 @@ func setField() []color.Color {
 		width,
 		height,
 		rand.Int63(),
+		octerves,
+		persistence,
 	)
 	field := make([]color.Color, width*height)
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
-			noise := int(p.OctavePerlinNoise(x, y))%128 + 128
+			noise := p.OctavePerlinNoise(x, y)
+			noise = float64(int(218*(0.5+0.5*noise))%128 + 128)
 			field[y*height+x] = color.RGBA{
 				uint8(noise),
 				uint8(noise),
@@ -64,11 +69,7 @@ func setArgs() (err error) {
 	return
 }
 
-func main() {
-	if err := setArgs(); err != nil {
-		panic(err)
-	}
-
+func createImageBytes() image.Image {
 	field := setField()
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
 	for x := 0; x < width; x++ {
@@ -76,12 +77,20 @@ func main() {
 			img.Set(x, y, field[y*height+x])
 		}
 	}
+	return img
+}
+
+func main() {
+	if err := setArgs(); err != nil {
+		panic(err)
+	}
+
 	f, err := os.Create(filename)
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
-	if err := png.Encode(f, img); err != nil {
+	if err := png.Encode(f, createImageBytes()); err != nil {
 		panic(err)
 	}
 }

@@ -5,10 +5,10 @@ import (
 	"math/rand"
 )
 
-func New(width int, height int, seed int64) *PerlinNoise {
+func New(width int, height int, seed int64, octerves int, persistence float64) *PerlinNoise {
 	p := &PerlinNoise{
-		octerves:    10,
-		persistence: 0.5,
+		octerves:    octerves,
+		persistence: persistence,
 		width:       width,
 		height:      height,
 	}
